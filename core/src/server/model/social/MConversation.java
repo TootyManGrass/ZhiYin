@@ -7,13 +7,21 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created by Hairuo on 2016-03-03.
+ * Conversation model
  */
 public class MConversation extends ServerModel {
 
+    /**
+     * List of id's of the messages that have been sent in the conversation
+     */
     private List<Long> messageList;
 
+    /**
+     * List of id's of the users in the conversation
+     */
     private List<Long> participants;
+
+    private List<Long> seenBy;
 
     public List<Long> getMessageList() {
         return messageList;
@@ -29,5 +37,13 @@ public class MConversation extends ServerModel {
 
     public void setParticipants(List<Long> participants) {
         this.participants = participants;
+    }
+
+    public List<Long> getSeenBy() {
+        return seenBy;
+    }
+
+    public void setSeenBy(List<Long> seenBy) {
+        this.seenBy = seenBy;
     }
 }

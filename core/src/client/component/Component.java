@@ -1,25 +1,21 @@
 package client.component;
 
 import client.singletons.MainBatch;
-import client.stateInterfaces.Disposable;
-import client.stateInterfaces.Drawable;
 import client.stateInterfaces.Updatable;
+import client.tools.Constants;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.utils.Disposable;
 
-import static client.singletons.StateManager.M;
 
-
-public abstract class Component implements Disposable, Drawable, Updatable
+public abstract class Component extends Actor implements Updatable, Constants
 {
-    /**
-     * This four variables represent the dimension and position of the component.
-     */
-    protected int x, y, width, height;
+
 
     /**
      * This is the primary sprite_batch that all components will draw to
      */
-    protected SpriteBatch sprite_batch = MainBatch.getInstance();
+    protected SpriteBatch spriteBatch = MainBatch.getInstance();
 
 
     /**
@@ -46,8 +42,8 @@ public abstract class Component implements Disposable, Drawable, Updatable
      * @param y The y value of the dimension.
      */
     public void setPosition(int x, int y){
-        this.x = (int) (x * M);
-        this.y = (int) (y * M);
+        setX(x * M);
+        setY(y * M);
     }
 
     /**
@@ -56,8 +52,8 @@ public abstract class Component implements Disposable, Drawable, Updatable
      * @param height This is the integer height of the component.
      */
     public void setDimensions(int width, int height){
-        this.width = (int) (width * M);
-        this.height = (int) (height * M);
+        setWidth(width*M);
+        setHeight(height*M);
     }
 
     /**
@@ -72,36 +68,12 @@ public abstract class Component implements Disposable, Drawable, Updatable
         setDimensions(width, height);
     }
 
-    /**
-     * This gets the x coordinate of the component.
-     * @return x
-     */
-    public int getX() {
-        return x;
+    @Override
+    public void setBounds(float x, float y, float width, float height) {
+        super.setBounds(x*M, y*M, width*M, height*M);
+
     }
 
-    /**
-     * This gets the y coordinate of the component.
-     * @return y
-     */
-    public int getY() {
-        return y;
-    }
 
-    /**
-     * This gets the width of the component.
-     * @return width of the component
-     */
-    public int getWidth() {
-        return width;
-    }
-
-    /**
-     * This gets the height of the component
-     * @return height of the component
-     */
-    public int getHeight() {
-        return height;
-    }
 
 }

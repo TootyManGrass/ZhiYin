@@ -18,6 +18,14 @@ import java.util.List;
  * Created by Kevin Zheng on 2016-02-18.
  */
 public class User extends ServerModel {
+    public long getProfileKey() {
+        return profileKey;
+    }
+
+    public void setProfileKey(long profileKey) {
+        this.profileKey = profileKey;
+    }
+
     /**
      * The key to the userProfile.
      */
@@ -25,91 +33,101 @@ public class User extends ServerModel {
     /**
      * The key to the userConversations.
      */
-    private long conversationsKey;
+    private long conversations;
     /**
      * The key to the userDiary.
      */
-    private long diaryKey;
+    private long diary;
     /**
      * The key to the userLog.
      */
-    private long logKey;
+    private long log;
     /**
      * The key to the userContent.
      */
-    private long contentKey;
+    private long content;
+    /**
+     * The current generated key count.
+     */
+    private long keyState;
+
+
+    public long getConversations() {
+        return conversations;
+    }
+
+    public void setConversations(long conversations) {
+        this.conversations = conversations;
+    }
+
+    public long getDiary() {
+        return diary;
+    }
+
+    public void setDiary(long diary) {
+        this.diary = diary;
+    }
+
+    public long getLog() {
+        return log;
+    }
+
+    public void setLog(long log) {
+        this.log = log;
+    }
+
+    public long getContent() {
+        return content;
+    }
+
+    public void setContent(long content) {
+        this.content = content;
+    }
+
+    public long getKeyState() {
+        return keyState;
+    }
+
+    public void setKeyState(long keyState) {
+        this.keyState = keyState;
+    }
+
+    public long getSnapChat() {
+        return snapChat;
+    }
+
+    public void setSnapChat(long snapChat) {
+        this.snapChat = snapChat;
+    }
+
+    public List<Long> getFriendKeys() {
+        return friendKeys;
+    }
+
+    public void setFriendKeys(List<Long> friendKeys) {
+        this.friendKeys = friendKeys;
+    }
+
+    public List<Long> getBandKeys() {
+        return bandKeys;
+    }
+
+    public void setBandKeys(List<Long> bandKeys) {
+        this.bandKeys = bandKeys;
+    }
+
+    /**
+
+     * The current snapchat.
+     */
+    private long snapChat;
     /**
      * The keys to the friends.
      */
-    private List<Long> friendsKey;
+    private List<Long> friendKeys;
 
-    /**Gets all basic user information.
-     *
-     * @return  The userProfile containing info.
+    /**
+     * The keys to the bands.
      */
-    public long getProfile() {
-        return profileKey;
-    }
-
-    /**Returns a model of all conversations a user has.
-     *
-     * @return  The userConversation containing convos.
-     */
-    public long getConversations() {
-        return conversationsKey;
-    }
-
-    /**Returns a model of all diary posts a user has.
-     *
-     * @return  The userDiaryContent.
-     */
-    public long getDiary() {
-        return diaryKey;
-    }
-
-    /**Returns a model of all uploaded content a user has.
-     *
-     * @return  The userUploadedContent.
-     */
-    public long getContent() {
-        return contentKey;
-    }
-
-    /**Gets all logged activity of the user.
-     *
-     * @return  The userActivitylog.
-     */
-    public long getLog() {
-        return logKey;
-    }
-
-    /**Gets the list of all friend keys.
-     *
-     * @return  The List of friend keys.
-     */
-    public List<Long> getFriendKeys() {
-        return friendsKey;
-    }
-
-
-
-    // SETTERS
-    public void setProfile(long profileKey) {
-        this.profileKey = profileKey;
-    }
-    public void setConversations(long conversationsKey) {
-        this.conversationsKey = conversationsKey;
-    }
-    public void setDiary(long diaryKey) {
-        this.diaryKey = diaryKey;
-    }
-    public void setLog(long logKey) {
-        this.logKey = logKey;
-    }
-    public void setContent(long contentKey) {
-        this.contentKey = contentKey;
-    }
-    public void setFriends(List<Long> friendsKey) {
-        this.friendsKey = friendsKey;
-    }
+    private List<Long> bandKeys;
 }

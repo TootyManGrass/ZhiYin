@@ -1,11 +1,12 @@
 package client.singletons;
 
-import client.events.ActionEvent;
-import client.pageStorage.Pages;
-import client.stateInterfaces.Performable;
+import client.pages.State;
+import client.tools.Constants;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.input.GestureDetector;
+import com.badlogic.gdx.math.Vector2;
 
 /**
  * This is the InputListener class.
@@ -16,11 +17,19 @@ import com.badlogic.gdx.InputProcessor;
  *
  * Created by Hongyu Wang on 3/9/2016.
  */
-public class InputListener implements InputProcessor, Performable{
+public class InputListener implements InputProcessor, Constants, GestureDetector.GestureListener {
     /**
      * Our instance of InputListener as per the Singleton design pattern.
      */
+
     private static InputListener ourInstance = new InputListener();
+    private static InputMultiplexer im = new InputMultiplexer();
+
+
+
+
+
+
 
 
     /**
@@ -30,12 +39,11 @@ public class InputListener implements InputProcessor, Performable{
      * that is currently active within the stateManager.
      */
     private StateManager stateManager;
-
     /**
-     * These are the coordinates of the mouse on the screen updated
-     * when the button is pressed.
+     * These are the coordinates of where on the screen was pressed.
      */
     private int mouseX, mouseY;
+
 
 
     /**
@@ -64,55 +72,42 @@ public class InputListener implements InputProcessor, Performable{
     }
 
     private InputListener() {
+        init();
+    }
+
+    /**
+     * This is the primary init method of our class.
+     *
+     */
+    private void init(){
         stateManager = StateManager.getInstance();
 
+    }
+
+    public static void prepare(){
+        im.clear();
+    }
+
+    public static void setListener(State state){
+        prepare();
+
+        im.addProcessor(new GestureDetector(getInstance()));
+        im.addProcessor(state.getStage());
+        im.addProcessor(InputListener.getInstance());
+        Gdx.input.setInputProcessor(im);
+
+    }
+
+    public static InputMultiplexer getMultiplexer(){
+        return im;
     }
 
     @Override
     public boolean keyDown(int keycode) {
 
-        if (keycode == Input.Keys.NUM_1)
-            stateManager.changeState(Pages.FRIENDS1);
-
-        if (keycode == Input.Keys.NUM_2)
-            stateManager.changeState(Pages.FRIENDS2);
-
-        if (keycode == Input.Keys.NUM_3)
-            stateManager.changeState(Pages.FRIENDS3);
-
-        if (keycode == Input.Keys.NUM_4)
-            stateManager.changeState(Pages.FRIENDS4);
-
-        if (keycode == Input.Keys.Q)
-            stateManager.changeState(Pages.DIARY1);
-
-        if (keycode == Input.Keys.W)
-            stateManager.changeState(Pages.DIARY2);
-
-        if (keycode == Input.Keys.E)
-            stateManager.changeState(Pages.DIARY3);
-
-        if (keycode == Input.Keys.A)
-            stateManager.changeState(Pages.HOME1);
-
-        if (keycode == Input.Keys.S)
-            stateManager.changeState(Pages.HOME2);
-
-        if (keycode == Input.Keys.D)
-            stateManager.changeState(Pages.HOME3);
-
-        if (keycode == Input.Keys.F)
-            stateManager.changeState(Pages.HOME4);
-
-        if (keycode == Input.Keys.Z)
-            stateManager.changeState(Pages.NOWPLAYING);
-
-        if (keycode == Input.Keys.X)
-            stateManager.changeState(Pages.PROFILE);
-
-
         return false;
     }
+
 
     @Override
     public boolean keyUp(int keycode) {
@@ -126,19 +121,33 @@ public class InputListener implements InputProcessor, Performable{
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        stateManager.actionPerformed(new ActionEvent(this));
         mouseX = screenX;
-        mouseY = screenY;
+
+        mouseY = Gdx.graphics.getHeight() - screenY;
+
+        stateManager.receiveInput();
+
         return false;
     }
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        return false;
+        mouseX = screenX;
+        //mouseY = (int)(HEIGHT*StateManager.M) - screenY;
+        mouseY = screenY;
+
+        stateManager.receiveRelease();
+
+        return true;
     }
 
     @Override
     public boolean touchDragged(int screenX, int screenY, int pointer) {
+        mouseX = screenX;
+        mouseY = (int)(HEIGHT*StateManager.M) - screenY;
+
+
+        stateManager.receiveDragged();
         return false;
     }
 
@@ -152,4 +161,47 @@ public class InputListener implements InputProcessor, Performable{
         return false;
     }
 
+
+    @Override
+    public boolean touchDown(float x, float y, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean tap(float x, float y, int count, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean longPress(float x, float y) {
+        return false;
+    }
+
+    @Override
+    public boolean fling(float velocityX, float velocityY, int button) {
+        System.out.println("velocityX = [" + velocityX + "], velocityY = [" + velocityY + "])");
+
+        StateManager.getInstance().handleGesture(velocityX > 0, velocityY < 0, Math.abs(velocityX) > Math.abs(velocityY));
+        return false;
+    }
+
+    @Override
+    public boolean pan(float x, float y, float deltaX, float deltaY) {
+        return false;
+    }
+
+    @Override
+    public boolean panStop(float x, float y, int pointer, int button) {
+        return false;
+    }
+
+    @Override
+    public boolean zoom(float initialDistance, float distance) {
+        return false;
+    }
+
+    @Override
+    public boolean pinch(Vector2 initialPointer1, Vector2 initialPointer2, Vector2 pointer1, Vector2 pointer2) {
+        return false;
+    }
 }

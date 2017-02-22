@@ -17,6 +17,8 @@ public class MHashtag extends ServerModel {
      */
     private List<Long> musicKeys;
 
+
+
     /**Returns the string representation of the hashtag.
      *
      * @return  The text of the hashtag.
@@ -33,10 +35,8 @@ public class MHashtag extends ServerModel {
         return musicKeys;
     }
 
-
-
-    public void setHashtag(String hashtag) {
-        this.hashtagName = hashtagName;
+    public void setHashtagName(String hashtag) {
+        this.hashtagName = hashtag;
     }
 
     public void setMusicKeys(List<Long> musicKeys) {

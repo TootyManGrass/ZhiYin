@@ -1,54 +1,63 @@
 package client.pages.friends;
 
-import client.component.basicComponents.Button;
-import client.component.basicComponents.Image;
-import client.events.ActionEvent;
-import client.pages.State;
-import client.stateInterfaces.ActionMonitor;
+import client.events.executables.internalChanges.updatePageExecutables.ExecuteChangePage;
+import client.pageStorage.Pages;
+import client.pages.friends.boxes.FriendBox;
+import client.pages.other.TransitionType;
+import client.pages.pageInternal.serverClientInteractions.FriendTalker;
+import client.pages.pageInternal.serverClientInteractions.ProfileTalker;
+import client.pages.pageInternal.serverClientInteractions.TalkerFactory;
+import client.stateInterfaces.Gesturable;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import server.model.user.User;
 
-public class Friends1 extends State implements ActionMonitor{
+public class Friends1 extends Friends1Shell implements Gesturable{
 
-    //private ServiceList<> friends;
+    private Table table;
 
-
+    public Friends1(){
+        init();
+    }
 
     public void init(){
         super.init();
 
-        //friends = new ServiceList<>();
+        table = new Table();
+        table.setBounds(0, 117*M, 750*M, 1100*M);
+        table.top();
+        stage.addActor(table);
 
-        Image background = new Image("Friends -1.png");
+        talkerAddFriends();
+    }
 
 
-        background.setBounds(0, 0, 750, 1350);
+    public void addBox(FriendBox box){
+        table.add(box.getTable()).width(750*M);
+        table.row();
+        disposables.add(box);
+    }
 
-        Button addFriendButton = new Button(this);
-        addFriendButton.setBounds(650, 1250, 100, 100);
+    private void talkerAddFriends(){
+        FriendTalker ft = TalkerFactory.getFriendTalker();
+        ProfileTalker pt = TalkerFactory.getProfileTalker();
 
-        Button toolsButton = new Button(this);
-        toolsButton.setBounds(0, 0, 750, 100);
+        if(ft.isUpdated()) {
+            for (User friend: ft.getAllFriends()) {
+                pt.init(friend);
+                pt.update(0);
+                if (pt.isUpdated()) {
 
-        Button recordButton = new Button(this);
-        recordButton.setBounds(0, 100, 750, 100);
+                    String friendName = pt.getName();
 
-        this.components.add(background);
-        this.components.add(addFriendButton);
-        this.components.add(toolsButton);
-        this.components.add(recordButton);
+                    addBox(new FriendBox(this, 1, friendName));
+                }
+            }
+        }
     }
 
     @Override
-    public void dispose() {
-
-    }
-
-    @Override
-    public void update(float dt) {
-
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-
+    public void handleGesture(boolean gestureXRight, boolean gestureYUp, boolean directionMainlyX) {
+        if(!gestureXRight && directionMainlyX)
+            new ExecuteChangePage(Pages.FRIENDS4, TransitionType.RIGHT_TO_LEFT).execute();
     }
 }

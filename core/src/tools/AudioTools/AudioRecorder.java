@@ -3,6 +3,17 @@ package tools.AudioTools;
 import java.io.*;
 import java.lang.reflect.Method;
 
+import org.robovm.apple.avfoundation.AVAudioRecorder;
+import org.robovm.apple.avfoundation.AVAudioSession;
+import org.robovm.apple.avfoundation.AVAudioSessionCategory;
+import org.robovm.apple.avfoundation.AVAudioSettings;
+import org.robovm.apple.corefoundation.OSStatusException;
+import org.robovm.apple.foundation.*;
+import org.robovm.objc.annotation.Block;
+import org.robovm.objc.block.BooleanBlock;
+import org.robovm.objc.block.VoidBlock1;
+import org.robovm.objc.block.VoidBlock2;
+import org.robovm.objc.block.VoidBooleanBlock;
 import org.robovm.rt.bro.annotation.Callback;
 import org.robovm.rt.bro.annotation.Pointer;
 import org.robovm.apple.audiotoolbox.*;
@@ -16,146 +27,143 @@ import org.robovm.apple.coreaudio.AudioErrorCode;
 import org.robovm.rt.VM;
 import org.robovm.rt.bro.*;
 import org.robovm.rt.bro.ptr.*;
+import server.model.media.MAudio;
+import server.model.media.MMusic;
+import tools.serverTools.databases.LocalDatabaseFactory;
 
 public class AudioRecorder {
-  protected double mSampleRate;
-  protected AudioFormat mFormatID;
-  protected int mFormatFlags;
-  protected int mBytesPerPacket;
-  protected int mFramesPerPacket;
-  protected int mBytesPerFrame;
-  protected int mChannelsPerFrame;
-  protected int mBitsPerChannel;
 
-  protected AudioQueue mQueue = null;
+    private static AudioRecorder singleInstance = new AudioRecorder();
 
-  private int kNumberBuffers = 3;
-  private PipedInputStream mPIS;
-  private PipedOutputStream mPOS;
-  private int mStateID = -1;
+    private boolean running = false;
 
-  private boolean mRunning = false;
+    private long count = 0L;
 
-  public AudioRecorder() throws IOException
-  {
-    mSampleRate = 44100;
-    mFormatID = AudioFormat.LinearPCM;
-    mFormatFlags = AudioFormatFlags.AudioFormatFlagIsPacked | AudioFormatFlags.AudioFormatFlagIsSignedInteger;
-    mBytesPerPacket = 2;
-    mFramesPerPacket = 1;
-    mBytesPerFrame = 2;
-    mChannelsPerFrame = 1;
-    mBitsPerChannel = 16;
+    private String fp;
 
-    mPOS = new PipedOutputStream();
-    mPIS = new PipedInputStream(mPOS);
-  }
+    private NSObject[] objects = {
+        NSNumber.valueOf(44100.f),
+        NSNumber.valueOf((int) AudioFormat.LinearPCM.value()),
+        NSNumber.valueOf(2),
+        NSNumber.valueOf(16),
+        NSNumber.valueOf(false),
+        NSNumber.valueOf(false)
+    };
 
-  public static int getMinBufferSize(int sampleRate, int channelConfig, int audioFormat)
-  {
-    // TODO Auto-generated method stub
-    return 0;
-  }
+    private NSString[] keys ={
+        AVAudioSettings.Keys.SampleRate(),
+        AVAudioSettings.Keys.FormatID(),
+        AVAudioSettings.Keys.NumberOfChannels(),
+        AVAudioSettings.Keys.BitDepthKey(),
+        AVAudioSettings.Keys.IsBigEndianKey(),
+        AVAudioSettings.Keys.IsFloatKey(),
 
-  public int deriveBufferSize(AudioQueue audioQueue, AudioStreamBasicDescription ASBDescription, double seconds)
-  {
-    int maxBufferSize = 0x50000;
-    int maxPacketSize = ASBDescription.getMBytesPerPacket();
-    System.out.println(3);
-    double numBytesForTime = ASBDescription.getMSampleRate() * maxPacketSize * seconds;
-    return (int)(numBytesForTime < maxBufferSize ? numBytesForTime : maxBufferSize);
-  }
+    };
 
-  public void release()
-  {
-    System.out.println("RECORD QUEUE STOPPING...");
-    mRunning = false;
-    mQueue.stop(true);
-//      mQueue.dispose(true);
-    System.out.println("RECORD QUEUE STOPPED");
-    try
-    {
-      mPOS.close();
-      mPIS.close();
-      AQRecorderState.drop(mStateID);
-    }
-    catch (Exception x) { x.printStackTrace(); }
-  }
+    private AVAudioSettings settings;
 
-  public int read(byte[] abData, int i, int length) throws IOException
-  {
-    return mPIS.read(abData, i, length);
-  }
-
-  /*<bind>*/static { Bro.bind(AudioRecorder.class); }/*</bind>*/
-  /*<constants>*//*</constants>*/
-    /*<constructors>*//*</constructors>*/
-    /*<properties>*//*</properties>*/
-    /*<members>*//*</members>*/
-  @Callback
-  public static void callbackMethod(
-          @Pointer long                     refcon,
-          AudioQueue                        inAQ,
-          AudioQueueBuffer                  inBuffer,
-          AudioTimeStampPtr                 inStartTime,
-          int                               inNumPackets,
-          AudioStreamPacketDescriptionPtr   inPacketDesc
-  )
-  {
-    try
-    {
-      AQRecorderState.AQRecorderStatePtr ptr = new AQRecorderState.AQRecorderStatePtr();
-      ptr.set(refcon);
-      AQRecorderState aqrs = ptr.get();
-      byte[] ba = VM.newByteArray(inBuffer.getMAudioData().getHandle(), inBuffer.getMAudioDataByteSize());
-      aqrs.getRecord().receive(ba);
-    }
-    catch (Exception x) { x.printStackTrace(); }
-
-    inAQ.enqueueBuffer(inBuffer, 0, null);
-  }
-
-  private void receive(byte[] ba)
-  {
-    if (mRunning) try { mPOS.write(ba); } catch (Exception x) { x.printStackTrace(); }
-  }
-
-  public void startRecording() throws Exception
-  {
-    AudioStreamBasicDescription asbd = new AudioStreamBasicDescription(mSampleRate, mFormatID, mFormatFlags, mBytesPerPacket, mFramesPerPacket, mBytesPerFrame, mChannelsPerFrame, mBitsPerChannel, 0);
-    AudioQueuePtr mQueuePtr = new AudioQueuePtr();
-    AudioQueueBufferPtr mBuffers = Struct.allocate(AudioQueueBufferPtr.class, kNumberBuffers);
-    System.out.println(11);
-    AQRecorderState aqData = new AQRecorderState(this);
-    mStateID = aqData.mID();
-    System.out.println(12);
-    Method callbackMethod = null;
-    Method[] methods = this.getClass().getMethods();
-    int i = methods.length;
-    while (i-->0) if (methods[i].getName().equals("callbackMethod"))
-    {
-      callbackMethod = methods[i];
-      break;
-    }
-    FunctionPtr fp = new FunctionPtr(callbackMethod );
-    VoidPtr vp = aqData.as(VoidPtr.class);
-
-    AudioErrorCode aqe = AudioQueue.createInput(asbd, fp, vp, null, null, 0, mQueuePtr);
-    System.out.println(CFRunLoopMode.Common.value());
-    System.out.println(aqe.name());
-    mQueue = mQueuePtr.get();
-    int bufferByteSize = deriveBufferSize(mQueue, asbd, 0.5);
-    System.out.println("BUFFER SIZE: "+bufferByteSize);
-
-    AudioQueueBufferPtr[] buffers = mBuffers.toArray(kNumberBuffers);
-    for (i = 0; i < kNumberBuffers; ++i)
-    {
-      mQueue.allocateBuffer(bufferByteSize, buffers[i]);
-      mQueue.enqueueBuffer(buffers[i].get(), 0, null);
+    private void makeSettings(){
+        for(int i=0;i<keys.length;i++)
+            settings.set(keys[i],objects[i]);
     }
 
-    mRunning = true;
-    mQueue.start(null);
-  }
+    NSURL filePath;
+    private static NSFileManager fm;
+
+    AVAudioSession session;
+    AVAudioRecorder avar;
+
+    public static AudioRecorder getInstance(){
+
+        return singleInstance;
+    }
+
+    private AudioRecorder(){
+
+        fm = new NSFileManager();
+        settings = new AVAudioSettings();
+        NSArray nsa = fm.getURLsForDirectory(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomainMask.UserDomainMask);
+        filePath = (NSURL)nsa.first();
+        session = AVAudioSession.getSharedInstance();
+        makeSettings();
+        fp = filePath.getPath()+ "/" + "song";
+        try {
+            avar = new AVAudioRecorder(new NSURL(fp), settings);
+        } catch (NSErrorException e) {
+            e.printStackTrace();
+        }
+
+
+
+    }
+
+    public void prepareToRecord(){
+
+        try {
+
+            //avar.dispose();
+            session.setActive(true);
+            String file =  fp+count;
+            filePath = new NSURL(file);
+            count++;
+            avar = new AVAudioRecorder(filePath, settings);
+            avar.setDelegate(avar.getDelegate());
+            avar.setMeteringEnabled(true);
+            session.setCategory(AVAudioSessionCategory.PlayAndRecord);
+
+
+            avar.prepareToRecord();
+
+        }catch(NSErrorException e){
+            e.printStackTrace();
+        }
+
+    }
+
+    public void startRecording() {
+
+        running = true;
+        //session.requestRecordPermission(b -> {
+
+        //});
+
+
+        avar.record();
+    }
+
+    public MAudio stopRecording(){
+        running = false;
+
+        avar.stop();
+
+
+        NSData mData = new NSData(fm.getContentsAtPath(filePath.getPath()));
+
+        MAudio audio = AudioCreator.createMAudio(mData);
+        audio.setKey(LocalDatabaseFactory.createLocalDatabase().generateKey());
+
+        AudioPlayer.getInstance().stop();
+
+        try {
+            session.setActive(false);
+        } catch (NSErrorException e) {
+            e.printStackTrace();
+        }
+        return audio;
+    }
+
+    public boolean isRecording(){
+        return avar.isRecording();
+    }
+
+    public void recordForOneSecond(){
+        avar.record(1);
+    }
+
+    public MAudio getCurrentMData(){
+        avar.stop();
+
+        return AudioCreator.createMAudio(fm.getContentsAtPath(filePath.getPath()));
+    }
 
 }

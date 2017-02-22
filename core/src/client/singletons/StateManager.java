@@ -1,22 +1,29 @@
 package client.singletons;
-import client.events.ActionEvent;
+import client.events.executables.internalChanges.serverInteractions.ExecuteUpdateSnapChatMessage;
 import client.pageStorage.Pages;
 import client.pages.State;
-import client.stateInterfaces.ActionMonitor;
-import client.stateInterfaces.Disposable;
+import client.pages.pageInternal.serverClientInteractions.TalkerFactory;
 import client.stateInterfaces.Drawable;
+import client.stateInterfaces.Gesturable;
+import client.stateInterfaces.Showable;
 import client.stateInterfaces.Updatable;
+import client.tools.Constants;
+import client.tools.ImageParser;
+import com.badlogic.gdx.scenes.scene2d.ui.WorkingTextArea;
+import com.badlogic.gdx.utils.Disposable;
+import server.services.factories.ImageManagerFactory;
 
 /**
  * This is essentially a card layout.
  *
  * Created by Hongyu Wang on 3/7/2016.
  */
-public class StateManager implements Disposable, Updatable, Drawable, ActionMonitor {
+public class StateManager implements Disposable, Updatable, Drawable, Constants {
+    private boolean stateUp;
     /**
      * The current instance of StateManager
      */
-    private static StateManager ourInstance = new StateManager(Pages.PROFILE);
+    private static StateManager ourInstance = new StateManager();
 
     /**
      * This returns the current instance of the StateManager class
@@ -26,23 +33,24 @@ public class StateManager implements Disposable, Updatable, Drawable, ActionMoni
         return ourInstance;
     }
 
-    public static final double M = .5;
+    public State getCurrentState() {
+        return currentState;
+    }
 
 
     /**
      * This is the current state within the statemanager.
      */
-    private State current_state;
+    private State currentState;
 
 
-    private StateManager(Pages initial_state){
+    private StateManager(){
         init();
-        changeState(initial_state);
     }
 
 
     protected void init(){
-
+        stateUp = false;
     }
 
 
@@ -51,28 +59,96 @@ public class StateManager implements Disposable, Updatable, Drawable, ActionMoni
      * @param page the page within the Pages enum
      */
     public void changeState(Pages page){
-        current_state = page.getStateReference();
+        toTemporaryState(page.getStateReference());
     }
+
+
+    public void toTemporaryState(State state){
+        currentState = state;
+
+
+        currentState.reset();
+
+        InputListener.setListener(currentState);
+    }
+
+
 
 
     @Override
     public void update(float dt) {
-        current_state.update(dt);
+
+        currentState.update(dt);
+
+        TalkerFactory.getServerTalker().update(dt);
+
     }
 
     @Override
     public void draw() {
-        current_state.draw();
+        currentState.draw();
     }
+
+
+
+
 
     @Override
     public void dispose() {
-        current_state.dispose();
+        for (State state : State.getEverything()){
+            state.dispose();
+        }
+
+        SkinSingleton.getInstance().dispose();
+        ShapeCreater.getInstance().dispose();
+        MainBatch.getInstance().dispose();
+        ImageParser.dispose();
+        ImageManagerFactory.createImageManager().dispose();
+
+    }
+
+    /**
+     * This is the method that is called when
+     * InputListener registers an input on the screen.
+     */
+    public void receiveInput(){
+        currentState.getInputController().checkPressed();
+
     }
 
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        current_state.actionPerformed(e);
+
+    public void receiveDragged(){
+        currentState.getInputController().checkDragged();
     }
+
+    public void receiveRelease(){
+        currentState.getInputController().checkRelease();
+    }
+
+    public void translateStage() {
+        if (os == MAC){
+
+            if (WorkingTextArea.getKeyboardIsVisible()){
+                System.out.println(currentState.getStage().getCamera());
+                if (!stateUp)
+                    currentState.getStage().getCamera().translate(0, -KEY_BOARD_HEIGHT, 0);
+                stateUp = true;
+            } else{
+                if (stateUp)
+                    currentState.getStage().getCamera().translate(0, KEY_BOARD_HEIGHT, 0);
+                stateUp = false;
+            }
+        }
+
+    }
+
+    public void handleGesture(boolean gestureX, boolean gestureY, boolean magX) {
+        if (currentState instanceof Gesturable) {
+            ((Gesturable) currentState).handleGesture(gestureX, gestureY, magX);
+        }
+    }
+
+
+
 }

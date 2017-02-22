@@ -21,4 +21,6 @@ public class ServerModel {
     public void setKey(long accessKey) {
         this.accessKey = accessKey;
     }
+
+
 }

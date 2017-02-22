@@ -1,6 +1,6 @@
 package server.model.social;
 
-import server.model.structureModels.ServerModel;
+import server.model.structureModels.TimeStampObject;
 
 import java.util.List;
 
@@ -8,15 +8,52 @@ import java.util.List;
 /**
  * Created by Kevin Zheng on 2016-03-02.
  */
-public class MPost extends ServerModel {
+public class MPost extends TimeStampObject {
+
+
+    protected String title;
+
+    /**
+     * Id of the user who created the post
+     */
     protected long creator;
+
+    /**
+     * List of id's of the comments in the post
+     */
     protected List<Long> comments;
+
+    /**
+     * Id of the MText representation of the description
+     */
     protected long text;
+
+    /**
+     * List of id's of the users who liked the post
+     */
     protected List<Long> likes;
+
+    /**
+     * List of id's of the music pieces that the post contains
+     */
     protected List<Long> Music;
+
+    /**
+     * List of id's of the images that the post contains
+     */
     protected List<Long> Images;
+
+    /**
+     * List of id's of audio pieces that the post contains
+     */
     protected List<Long> Audio;
-    protected long timeStamp;
+
+
+    public String getTitle(){
+        return title;
+    }
+
+    public void setTitle(String title){ this.title = title; }
 
     public List<Long> getComments() {
         return comments;
@@ -56,14 +93,6 @@ public class MPost extends ServerModel {
 
     public void setAudio(List<Long> audio) {
         Audio = audio;
-    }
-
-    public long getTimeStamp() {
-        return timeStamp;
-    }
-
-    public void setTimeStamp(long timeStamp) {
-        this.timeStamp = timeStamp;
     }
 
     public List<Long> getLikes() {

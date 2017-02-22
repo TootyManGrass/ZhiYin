@@ -1,8 +1,8 @@
 package server.model.media;
 
+import com.badlogic.gdx.graphics.Texture;
 import server.model.structureModels.ServerModel;
 
-import java.awt.image.BufferedImage;
 
 /**
  * Created by Kevin Zheng on 2016-03-02.
@@ -15,7 +15,7 @@ public class MImage extends ServerModel {
     /**
      * The buffered image.
      */
-    BufferedImage image;
+    byte[] image;
 
     /**Returns the name or title of this image.
      *
@@ -25,20 +25,19 @@ public class MImage extends ServerModel {
         return name;
     }
 
-    /**Returns the BufferedImage of the image.
+    /**Returns the Texture of the image.
      *
-     * @return  The image in a BufferedImage.
+     * @return  The image in a Texture.
      */
-    public BufferedImage getImage() {
+    public byte[] getImage() {
         return image;
     }
-
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setImage(BufferedImage image) {
+    public void setImage(byte[] image) {
         this.image = image;
     }
 
